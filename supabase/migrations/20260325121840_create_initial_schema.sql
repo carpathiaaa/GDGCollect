@@ -39,7 +39,7 @@ CREATE TABLE field_variants (
     field_id UUID NOT NULL REFERENCES form_fields(id) ON DELETE CASCADE,
     label TEXT NOT NULL,
     price_override NUMERIC(10,2),
-    sort_order INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0
 );
 
 
@@ -80,3 +80,61 @@ CREATE TABLE submission_entries (
   unit_price NUMERIC(10,2) NOT NULL,
   subtotal NUMERIC(10,2) NOT NULL
 );
+
+-- ============================================
+-- Row-Level Security
+-- ============================================
+
+-- Enable RLS on all tables
+ALTER TABLE forms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE field_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE submission_entries ENABLE ROW LEVEL SECURITY;
+
+-- Forms: anyone can read published forms, admin can do anything
+CREATE POLICY "Public can view published forms"
+  ON forms FOR SELECT
+  USING (is_published = true);
+
+CREATE POLICY "Admin full access to forms"
+  ON forms FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+
+-- Form fields: anyone can read (needd to render the form), admin can do everything
+CREATE POLICY "Public can view form fields"
+  ON form_fields FOR SELECT
+  USING (true);
+
+CREATE POLICY "Admin full access to form fields"
+  ON form_fields FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+  -- Submissions: anyone can insert (buyers submit), admin can read and update
+CREATE POLICY "Public can create submissions"
+  ON submissions FOR INSERT
+  TO anon
+  WITH CHECK (true);
+
+CREATE POLICY "Admin full access to submissions"
+  ON submissions FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- Submission entries: anyone can insert (created with submission), admin can read
+CREATE POLICY "Public can create submission entries"
+  ON submission_entries FOR INSERT
+  TO anon
+  WITH CHECK (true);
+
+CREATE POLICY "Admin full access to submission entries"
+  ON submission_entries FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
